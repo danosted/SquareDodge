@@ -33,14 +33,19 @@
                 return entity;
             }
 
-            try
+            if (typeof(T).GetConstructor(Type.EmptyTypes) != null)
             {
-                entity = (T)Activator.CreateInstance(typeof(T), new object[] { this, PrefabManager, Configuration });
+                entity = (T)Activator.CreateInstance(typeof(T), new object[] { });
             }
-            catch (Exception e)
+            else if (typeof(T).GetConstructor(new[] { typeof(IoC) }) != null)
             {
                 entity = (T)Activator.CreateInstance(typeof(T), new object[] { this });
             }
+            else
+            {
+                entity = (T)Activator.CreateInstance(typeof(T), new object[] { this, PrefabManager, Configuration });
+            }
+
             _container.Add(entity);
 
             return entity;
