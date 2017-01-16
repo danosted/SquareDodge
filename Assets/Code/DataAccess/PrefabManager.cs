@@ -2,6 +2,7 @@
 {
     using IoC;
     using MonoBehaviours.Configuration;
+    using MonoBehaviours.UserInterface;
     using System.Collections.Generic;
     using System.Linq;
     using UnityEngine;
@@ -20,37 +21,41 @@
             _inactivePrefabs = new List<Object>();
         }
 
-        public T GetObject<T>() where T : Object
-        {
-            var prefab = (T)_inactivePrefabs.FirstOrDefault(p => p.GetType() == typeof(T));
-            if (prefab != null)
-            {
-                _inactivePrefabs.Remove(prefab);
-                _activePrefabs.Add(prefab);
-                return prefab;
-            }
-            var shell = new GameObject(typeof(T).ToString(), typeof(T)) as Object;
-            _activePrefabs.Add(shell);
-            return prefab;
-        }
-
         public T GetPrefab<T>(T prefab) where T : Object
         {
             lock (semaLock)
             {
-                var instance = (T)_inactivePrefabs.FirstOrDefault(p => p.GetType() == typeof(T));
+                var instance = (T)_inactivePrefabs.FirstOrDefault(p => p.GetType() == typeof(T) && p.name.Equals(prefab.name + "(Clone)"));
+                //if (instance == null)
+                //{
+                //    instance = (T)_inactivePrefabs.FirstOrDefault(p => p.GetType() == typeof(T));
+                //}
                 if (instance != null)
                 {
                     _inactivePrefabs.Remove(instance);
                     _activePrefabs.Add(instance);
                     return instance;
                 }
+
                 if (prefab == null)
                 {
                     throw new UnityException(string.Format("Prefab was null. Type '{0}'.", typeof(T)));
                 }
                 instance = Object.Instantiate(prefab);
                 _activePrefabs.Add(instance);
+                return instance;
+            }
+        }
+
+        public T GetActivePrefab<T>(T prefab) where T : Object
+        {
+            lock (semaLock)
+            {
+                var instance = (T)_activePrefabs.FirstOrDefault(p => p.GetType() == typeof(T));
+                if (instance == null)
+                {
+                    throw new UnityException(string.Format("Prefab was not part of active prefabs. Type '{0}'.", typeof(T)));
+                }
                 return instance;
             }
         }
@@ -79,6 +84,21 @@
             }
             _activePrefabs.Remove(prefab);
             _inactivePrefabs.Add(prefab);
+        }
+
+        internal void Shutdown()
+        {
+            lock (semaLock)
+            {
+                var except = new [] { typeof(GlobalConfiguration), typeof(CanvasManager) };
+                var tempList = _activePrefabs.Where(ap => !except.Contains(ap.GetType())).ToList();
+                foreach (var p in tempList)
+                {
+                    ((MonoBehaviour)p).gameObject.SetActive(false);
+                    _activePrefabs.Remove(p);
+                    _inactivePrefabs.Add(p);
+                }
+            }
         }
     }
 }

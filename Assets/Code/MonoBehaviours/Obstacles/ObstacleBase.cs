@@ -4,24 +4,24 @@
     using IoC;
     using DataAccess;
     using GameLogic;
+    using Common;
+    using Utilities;
 
-    public class ObstacleBase : MonoBehaviour
+    public class ObstacleBase : PrefabBase
     {
-        protected IoC Container { get; set; }
         protected int Level { get; set; }
         protected float Speed { get; set; }
-        protected PrefabManager PrefabManager { get; set; }
-        protected ObstacleLogic ObstacleLogic { get; set; }
-        
-        public virtual void Activate(IoC ioc, int level, Vector3 intialPosition)
+        protected ObstacleLogic ObstacleLogic { get; private set; }
+
+        public virtual void Activate(IoC container, int level, Vector3 intialPosition)
         {
-            Container = ioc;
+            base.Activate(container);
+            ObstacleLogic = ObstacleLogic == null ? Container.Resolve<ObstacleLogic>() : ObstacleLogic;
+
             Level = level;
             Speed = 1f;
             transform.position = intialPosition;
             gameObject.SetActive(true);
-            PrefabManager = PrefabManager == null ? Container.Resolve<PrefabManager>() : PrefabManager;
-            ObstacleLogic = ObstacleLogic == null ? Container.Resolve<ObstacleLogic>() : ObstacleLogic;
         }
 
         public void Deactivate()
@@ -37,12 +37,12 @@
 
         protected virtual void Move()
         {
-            transform.position = transform.position + (Vector3.down * Time.deltaTime * Speed * Level);
+            transform.Translate(Vector3.down * Time.deltaTime * Speed * Level);
         }
 
         protected virtual void CheckOutOfBounds()
         {
-            if(!Container.Resolve<ScreenLogic>().IsOutOfViewportBounds(transform.position))
+            if(!Container.Resolve<ScreenUtil>().IsOutOfViewportBounds(transform.position))
             {
                 return;
             }
@@ -51,6 +51,7 @@
 
         protected virtual void OnMouseEnter()
         {
+            ScoreLogic.AddToScore(-Level);
             Deactivate();
         }
     }

@@ -6,17 +6,21 @@
     using DataAccess.DTOs;
     using IoC;
     using UnityEngine;
+    using UnityEngine.SceneManagement;
 
     public class FlowLogic : LogicBase
     {
+
         public FlowLogic(IoC container, PrefabManager prefabManager, GlobalConfiguration config) : base(container, prefabManager, config)
         {
         }
 
         public void StartGameFlow()
         {
-            var pman = Container.Resolve<PrefabManager>();
-            var field = pman.GetPrefab(Configuration.prefab_obstacle_field);
+            // Initialize UI
+            Container.Resolve<UserInterfaceLogic>().InitializeGameCanvas();
+
+            var field = PrefabManager.GetPrefab(Configuration.prefab_obstacle_field);
             field.Activate(Container);
             field.StartWave(CreateWaves(null, 100));
         }
@@ -48,5 +52,15 @@
             };
         }
 
+        public void GameOver()
+        {
+            Container.Resolve<UserInterfaceLogic>().InitializeGameOverCanvas();
+            PrefabManager.Shutdown();
+        }
+
+        public void RestartGame()
+        {
+            SceneManager.LoadScene(0);
+        }
     }
 }

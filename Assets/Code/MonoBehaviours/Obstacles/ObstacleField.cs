@@ -8,32 +8,32 @@
     using GameLogic;
     using System.Linq;
     using Utilities;
+    using Common;
 
-    public class ObstacleField : MonoBehaviour
+    public class ObstacleField : PrefabBase
     {
-        private IoC _container;
         private ICollection<ObstacleBase> _activeObstacles;
         private ICollection<ObstacleBase> _inactiveObstacles;
 
         private Wave _currentWave;
-        private ScreenLogic _screen;
+        private ScreenUtil _screen;
         private ObstacleLogic _obstacleLogic;
 
         public int FieldSize { get; set; }
 
-        public void Activate(IoC ioc)
+        public override void Activate(IoC container)
         {
-            _container = ioc;
+            base.Activate(container);
             _activeObstacles = new List<ObstacleBase>();
             _inactiveObstacles = new List<ObstacleBase>();
-            gameObject.SetActive(true);
+            _screen = Container.Resolve<ScreenUtil>();
+            _obstacleLogic = Container.Resolve<ObstacleLogic>();
+            _currentWave = null;
 
-            // TODO 1 (DRO): Test
-            _screen = _container.Resolve<ScreenLogic>();
-            _obstacleLogic = _container.Resolve<ObstacleLogic>();
-
-            var size = new Vector3(Mathf.Abs(_screen.ViewportToWorldBorderMin.x) + Mathf.Abs(_screen.ViewportToWorldBorderMax.x), Mathf.Abs(_screen.ViewportToWorldBorderMin.y) + Mathf.Abs(_screen.ViewportToWorldBorderMax.y), 0f);
+            var size = _screen.GetScreenSizeInWorld();
             FieldSize = size.x > size.y ? (int)size.y : (int)size.x;
+
+            gameObject.SetActive(true);
         }
 
         public void Deactivate()
@@ -52,11 +52,10 @@
 
         private void CreateObstacles(int obstacleCount, int level)
         {
-            var prefabManager = _container.Resolve<PrefabManager>();
+            var prefabManager = Container.Resolve<PrefabManager>();
 
             // TODO 1 (DRO): Include the size of the obstacles
             var possiblePositions = obstacleCount < FieldSize ? FieldSize : obstacleCount;
-            Debug.LogFormat("possiblePositions. {0}.", possiblePositions);
 
             var positions = new int[possiblePositions];
             for(var i = 0; i < possiblePositions; i++)
@@ -81,14 +80,15 @@
                 var obstacleHeight = 0.5f;
 
                 // Map from positions to world coordinates using screen borders
-                var positionValue = MathUtil.MapValueFromRangeToRange(indexValue, 0, possiblePositions, _screen.ViewportToWorldBorderMin.x + obstacleWidth, _screen.ViewportToWorldBorderMax.x - obstacleWidth);
-                Debug.LogFormat("positionValue. {0}.", positionValue);
-
+                var positionValue = MathUtil.MapInputFromInputRangeToOutputRange(indexValue, 0, possiblePositions, _screen.ViewportToWorldBorderMin.x + obstacleWidth, _screen.ViewportToWorldBorderMax.x - obstacleWidth);
+                
                 var randomPosition = new Vector3(positionValue, _screen.ViewportToWorldBorderMax.y - obstacleHeight, 0f);
 
                 positions[indexValue] = -1;
 
-                obst.Activate(_container, level, randomPosition);
+                obst.Activate(Container, level, randomPosition);
+
+                ScoreLogic.AddToScore(level);
 
                 _activeObstacles.Add(obst);
             }
@@ -98,9 +98,13 @@
         {
             if (_currentWave == null)
             {
+                if(!_activeObstacles.Any(ao => ao.isActiveAndEnabled))
+                {
+                    Container.Resolve<FlowLogic>().GameOver();
+                }
                 return;
             }
-            if(_currentWave.IsStarted)
+            if (_currentWave.IsStarted)
             {
                 _currentWave.WaveActiveTime += Time.deltaTime;
                 if(_currentWave.WaveActiveTime > _currentWave.WaveLengthSeconds)

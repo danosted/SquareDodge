@@ -3,17 +3,13 @@
     using DataAccess;
     using IoC;
     using MonoBehaviours.Configuration;
-    using System.Collections.Generic;
-    using UnityEngine;
 
     public class LogicBase
     {
         #region Properties
         protected IoC Container { get; set; }
-        protected PrefabManager PrefabManager { get; set; }
-        protected GlobalConfiguration Configuration { get; set; }
-        protected ICollection<Object> ActivePrefabs { get; set; }
-        protected ICollection<Object> InactivePrefabs { get; set; }
+        protected PrefabManager PrefabManager { get; private set; }
+        protected GlobalConfiguration Configuration { get; private set; }
         #endregion
         
         #region Constructors

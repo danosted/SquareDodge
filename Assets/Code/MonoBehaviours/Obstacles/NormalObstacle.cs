@@ -7,13 +7,13 @@
     {
         void OnTriggerEnter2D(Collider2D other)
         {
-            // TODO 1 (DRO): destroy obstacle and spawn debris if collided with other obstacle
+            // destroy obstacle and spawn debris if collided with other obstacle
             var otherObst = other.GetComponent<NormalObstacle>();
             if (otherObst == null)
             {
                 return;
             }
-            ObstacleLogic.SpawnObstacleDebris(transform.position, 10);
+            ObstacleLogic.SpawnObstacleDebris(transform.position, 8);
             Deactivate();
         }
     }
