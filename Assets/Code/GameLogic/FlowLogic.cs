@@ -20,6 +20,10 @@
             // Initialize UI
             Container.Resolve<UserInterfaceLogic>().InitializeGameCanvas();
 
+            // Initialize Drawing
+            var drawing = PrefabManager.GetPrefab(Configuration.prefab_drawing_field);
+            drawing.Activate(Container);
+
             var field = PrefabManager.GetPrefab(Configuration.prefab_obstacle_field);
             field.Activate(Container);
             field.StartWave(CreateWaves(null, 100));

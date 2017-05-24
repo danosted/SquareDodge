@@ -50,49 +50,54 @@
             _currentWave = wave;
         }
 
-        private void CreateObstacles(int obstacleCount, int level)
-        {
-            var prefabManager = Container.Resolve<PrefabManager>();
+        ///// <summary>
+        ///// Create obstacle distributed in equal possitions along the width of the playing field
+        ///// </summary>
+        //private void CreateObstacles(int obstacleCount, int level)
+        //{
+        //    var prefabManager = Container.Resolve<PrefabManager>();
 
-            // TODO 1 (DRO): Include the size of the obstacles
-            var possiblePositions = obstacleCount < FieldSize ? FieldSize : obstacleCount;
+        //    // TODO 1 (DRO): Include the size of the obstacles
+        //    var possiblePositions = obstacleCount < FieldSize ? FieldSize : obstacleCount;
 
-            var positions = new int[possiblePositions];
-            for(var i = 0; i < possiblePositions; i++)
-            {
-                positions[i] = i;
-            }
+        //    // TODO 1 (DRO): Make it obstacle width independent
+        //    // We distribute positions from the assumption, that each obstacle is 1 unit wide
+        //    var positions = new int[possiblePositions];
+        //    for(var i = 0; i < possiblePositions; i++)
+        //    {
+        //        positions[i] = i;
+        //    }
             
-            for (var i = 0; i < obstacleCount; i++)
-            {
-                var obst = _obstacleLogic.GetNormalObstacle();
+        //    for (var i = 0; i < obstacleCount; i++)
+        //    {
+        //        var obst = _obstacleLogic.GetNormalObstacle();
 
-                // Find what remains of the positions available
-                var remainingPositions = positions.Where(x => x != -1).ToArray();
+        //        // Find what remains of the positions available
+        //        var remainingPositions = positions.Where(x => x != -1).ToArray();
 
-                // Pick a random
-                var random = Random.Range(0, remainingPositions.Count());
+        //        // Pick a random
+        //        var random = Random.Range(0, remainingPositions.Count());
 
-                // Get the index value of the position
-                var indexValue = remainingPositions[random];
+        //        // Get the index value of the position
+        //        var indexValue = remainingPositions[random];
 
-                var obstacleWidth = 0.5f;
-                var obstacleHeight = 0.5f;
+        //        var obstacleWidth = 0.5f;
+        //        var obstacleHeight = 0.5f;
 
-                // Map from positions to world coordinates using screen borders
-                var positionValue = MathUtil.MapInputFromInputRangeToOutputRange(indexValue, 0, possiblePositions, _screen.ViewportToWorldBorderMin.x + obstacleWidth, _screen.ViewportToWorldBorderMax.x - obstacleWidth);
+        //        // Map from positions to world coordinates using screen borders
+        //        var positionValue = MathUtil.MapInputFromInputRangeToOutputRange(indexValue, 0, possiblePositions, _screen.ViewportToWorldBorderMin.x + obstacleWidth, _screen.ViewportToWorldBorderMax.x - obstacleWidth);
                 
-                var randomPosition = new Vector3(positionValue, _screen.ViewportToWorldBorderMax.y - obstacleHeight, 0f);
+        //        var randomPosition = new Vector3(positionValue, _screen.ViewportToWorldBorderMax.y - obstacleHeight, 0f);
 
-                positions[indexValue] = -1;
+        //        positions[indexValue] = -1;
 
-                obst.Activate(Container, level, randomPosition);
+        //        obst.Activate(Container, level, randomPosition);
 
-                ScoreLogic.AddToScore(level);
+        //        ScoreLogic.AddToScore(level);
 
-                _activeObstacles.Add(obst);
-            }
-        }
+        //        _activeObstacles.Add(obst);
+        //    }
+        //}
 
         void Update()
         {
@@ -114,7 +119,8 @@
                 return;
             }
             _currentWave.IsStarted = true;
-            CreateObstacles(_currentWave.ObstacleCount, _currentWave.ObstacleLevel);
+            var objs = Container.Resolve<ObstacleLogic>().CreateObstacles(_currentWave.ObstacleCount, _currentWave.ObstacleLevel, FieldSize);
+            _activeObstacles.ToList().AddRange(objs);
         }
     }
 }
