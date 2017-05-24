@@ -21,8 +21,7 @@
             Container.Resolve<UserInterfaceLogic>().InitializeGameCanvas();
 
             // Initialize Drawing
-            var drawing = PrefabManager.GetPrefab(Configuration.prefab_drawing_field);
-            drawing.Activate(Container);
+            Container.Resolve<DrawingFieldLogic>();
 
             var field = PrefabManager.GetPrefab(Configuration.prefab_obstacle_field);
             field.Activate(Container);
