@@ -13,7 +13,6 @@
     public class ObstacleField : PrefabBase
     {
         private ICollection<ObstacleBase> _activeObstacles;
-        private ICollection<ObstacleBase> _inactiveObstacles;
 
         private Wave _currentWave;
         private ScreenUtil _screen;
@@ -25,9 +24,7 @@
         {
             base.Activate(container);
             _activeObstacles = new List<ObstacleBase>();
-            _inactiveObstacles = new List<ObstacleBase>();
             _screen = Container.Resolve<ScreenUtil>();
-            _obstacleLogic = Container.Resolve<ObstacleLogic>();
             _currentWave = null;
 
             var size = _screen.GetScreenSizeInWorld();

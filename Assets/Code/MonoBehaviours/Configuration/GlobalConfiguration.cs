@@ -17,8 +17,9 @@
         public CanvasManager ui_game_over_canvas_manager;
         [Header("Drawing Field")]
         public DrawingField prefab_drawing_field;
-        public GameObject prefab_dummy;
+        public Vector2 param_drawing_field_figure_point_count;
         [Header("Game Params")]
         public bool param_game_over;
+        public bool param_debug_enabled;
     }
 }

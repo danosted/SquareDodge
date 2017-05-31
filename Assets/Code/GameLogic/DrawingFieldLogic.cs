@@ -3,13 +3,12 @@
     using MonoBehaviours.Configuration;
     using Common;
     using DataAccess;
-    using DataAccess.DTOs;
     using IoC;
     using UnityEngine;
-    using UnityEngine.SceneManagement;
     using Assets.Code.Utilities;
     using System.Collections.Generic;
     using System.Linq;
+    using Assets.Code.MonoBehaviours.Drawing;
 
     public class DrawingFieldLogic : LogicBase
     {
@@ -19,6 +18,8 @@
         private Point FieldSize { get; set; }
         private ICollection<Point> DrawingFieldPoints { get; set; }
         private ICollection<Vector3> CurrentFigurePoints { get; set; }
+        private ICollection<DrawingField> DrawingFields { get; set; }
+        private ICollection<DrawingField> CurrentDrawingPoints { get; set; }
 
         private struct Point
         {
@@ -30,6 +31,11 @@
         {
             _screen = Container.Resolve<ScreenUtil>();
 
+        }
+
+        public void InitializeDrawingFields()
+        {
+            // First calculate the field size based on the screen resolution
             var screenSize = _screen.GetScreenSizeInWorld();
 
             FieldSize = new Point
@@ -38,23 +44,65 @@
                 y = (int)screenSize.y
             };
 
-            DrawingFieldPoints = DrawingFieldPoints == null ? CreateDrawingField(FieldSize.x, FieldSize.y) : DrawingFieldPoints;
+            // Initialize the drawingfield locations based on points
+            DrawingFieldPoints = CreateDrawingField(FieldSize.x, FieldSize.y);
 
-            // TODO 1 (DRO): For testing
-            //CurrentFigurePoints = CreateStatícFigure();
+            // Map the points to Vector3 in world coordinates
             CurrentFigurePoints = MapAreasToVector3(DrawingFieldPoints);
 
-            // TODO 1 (DRO): Test
+            // Initialize the drawing fields in the game world
+            DrawingFields = new List<DrawingField>(CurrentFigurePoints.Count);
             foreach (var point in CurrentFigurePoints)
             {
-                var goo = PrefabManager.GetPrefab(Configuration.prefab_dummy);
-                goo.transform.position = point;
-                goo.name = string.Format("X: {0} - Y: {1}.", point.x, point.y);
+                var dField = PrefabManager.GetPrefab(Configuration.prefab_drawing_field);
+                dField.transform.position = point;
+                dField.name = string.Format("X: {0} - Y: {1}.", point.x, point.y);
+                dField.Activate(Container);
+                DrawingFields.Add(dField);
             }
-
         }
 
+        // TODO 1 (DRO): Test
+        public void InitializeTestDrawing()
+        {
+            if (!DrawingFields.Any())
+            {
+                Debug.LogWarning("No drawing fields found.");
+                return;
+            }
+            var drawingPointCount = (int)Random.Range(Configuration.param_drawing_field_figure_point_count.x, Configuration.param_drawing_field_figure_point_count.y);
+            var drawingSegments = DrawingFields.Count / drawingPointCount;
+            CurrentDrawingPoints = new List<DrawingField>(drawingPointCount);
+            for (var i = 0; i < drawingPointCount - 1; i++)
+            {
+                var randomIndex = Random.Range(drawingSegments * i, drawingSegments * (i + 1));
+                var field = DrawingFields.ElementAt(randomIndex);
+                CurrentDrawingPoints.Add(field);
+                field.IsTarget(true);
+            }
+        }
 
+        public int GetDrawingFieldIndex(DrawingField drawingField)
+        {
+            return DrawingFields.ToList().IndexOf(drawingField);
+        }
+
+        public void DrawingFieldRegistered(DrawingField drawingField)
+        {
+
+            if (CurrentDrawingPoints.Any(x => x.Equals(drawingField)))
+            {
+                Debug.LogFormat("DrawingField registered {0}.", drawingField.name);
+                CurrentDrawingPoints.Remove(drawingField);
+                if (!CurrentDrawingPoints.Any())
+                {
+                    Debug.LogFormat("All drawing points registered. Hurray!!.");
+                    InitializeTestDrawing();
+                }
+            }
+        }
+
+        #region Create Drawing Fields
         private ICollection<Point> CreateDrawingField(int width, int height)
         {
             var areas = new List<Point>(width * height);
@@ -111,40 +159,7 @@
             }
             return result;
         }
-
-        private ICollection<Vector3> CreateStatícFigure()
-        {
-            var figure = new Point[4];
-            figure[0] = DrawingFieldPoints.FirstOrDefault(p => p.x == FieldSize.x / 2 && p.y == 0);
-            figure[1] = DrawingFieldPoints.FirstOrDefault(p => p.x == 0 && p.y == FieldSize.y / 2);
-            figure[2] = DrawingFieldPoints.FirstOrDefault(p => p.x == FieldSize.x / 2 && p.y == FieldSize.y - 1);
-            figure[3] = DrawingFieldPoints.FirstOrDefault(p => p.x == FieldSize.x - 1 && p.y == FieldSize.y / 2);
-            var res = MapAreasToVector3(figure);
-            return res;
-        }
-
-        // TODO 1 (DRO): Prototype figure drawing
-        //private ICollection<Point> CreateStatícFigure(int count)
-        //{
-        //    var resultFigure = new Point[count];
-        //    var randomIndex = Random.Range(0, DrawingFieldPoints.Count);
-        //    var point = DrawingFieldPoints.ElementAt(randomIndex);
-        //    resultFigure[0] = point;
-
-        //    for (var i = 1; i < count; i++)
-        //    {
-        //        randomIndex = GetRandomIndex(randomIndex);
-        //        point = DrawingFieldPoints.ElementAt(randomIndex);
-        //        resultFigure[0] = point;
-        //    }
-
-        //    return null;
-        //}
-
-        //private int GetRandomIndex(int index)
-        //{
-        //    return Random.Range(0, 1) == 0 ? index + FieldSize.y : index + 1;
-        //}
+        #endregion
 
     }
 }
