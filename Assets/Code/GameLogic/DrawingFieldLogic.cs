@@ -52,13 +52,15 @@
 
             // Initialize the drawing fields in the game world
             DrawingFields = new List<DrawingField>(CurrentFigurePoints.Count);
+            var fieldOrder = 1;
             foreach (var point in CurrentFigurePoints)
             {
                 var dField = PrefabManager.GetPrefab(Configuration.prefab_drawing_field);
                 dField.transform.position = point;
-                dField.name = string.Format("X: {0} - Y: {1}.", point.x, point.y);
-                dField.Activate(Container);
+                dField.name = string.Format("Order: {0}, X: {1} - Y: {2}.", fieldOrder, point.x, point.y);
+                dField.Activate(Container, fieldOrder);
                 DrawingFields.Add(dField);
+                fieldOrder++;
             }
         }
 
@@ -80,6 +82,7 @@
                 CurrentDrawingPoints.Add(field);
                 field.IsTarget(true);
             }
+            UpdateLowestOrderDrawingField();
         }
 
         public int GetDrawingFieldIndex(DrawingField drawingField)
@@ -87,19 +90,43 @@
             return DrawingFields.ToList().IndexOf(drawingField);
         }
 
-        public void DrawingFieldRegistered(DrawingField drawingField)
+        /// <summary>
+        ///  Check if the registered drawingfield is taken in the correct order
+        /// </summary>
+        /// <param name="drawingField"></param>
+        /// <returns></returns>
+        public bool DrawingFieldRegistered(DrawingField drawingField)
         {
 
-            if (CurrentDrawingPoints.Any(x => x.Equals(drawingField)))
+            //if (CurrentDrawingPoints.Any(x => x.Equals(drawingField)))
+            // Are there any drawing fields with lower order, then it is not a success
+            if (drawingField.IsLowestOrder)
             {
-                Debug.LogFormat("DrawingField registered {0}.", drawingField.name);
+                Debug.LogFormat("DrawingField registered. Order {0}.", drawingField.Order);
                 CurrentDrawingPoints.Remove(drawingField);
                 if (!CurrentDrawingPoints.Any())
                 {
                     Debug.LogFormat("All drawing points registered. Hurray!!.");
                     InitializeTestDrawing();
                 }
+                UpdateLowestOrderDrawingField();
+                return true;
             }
+            else
+            {
+                // We might decide to do something on unsuccesfull drawing field selection
+                return false;
+            }
+        }
+
+        private void UpdateLowestOrderDrawingField()
+        {
+            var lowestOrderDrawingField = CurrentDrawingPoints.FirstOrDefault(df => CurrentDrawingPoints.Min(x => x.Order) == df.Order);
+            if(lowestOrderDrawingField == null)
+            {
+                throw new System.Exception("Could not find lowest order drawing field.");
+            }
+            lowestOrderDrawingField.IsLowestOrder = true;
         }
 
         #region Create Drawing Fields

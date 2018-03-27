@@ -11,6 +11,27 @@
         private DrawingFieldLogic _logic;
         private SpriteRenderer _childSprite;
         private bool _isTarget;
+        public int Order { get; private set; }
+
+        private bool _isLowestOrder;
+        public bool IsLowestOrder
+        {
+            get
+            {
+                return _isLowestOrder;
+            }
+            set
+            {
+                _isLowestOrder = value;
+                SetColour(true);
+            }
+        }
+
+        public void Activate(IoC container, int order)
+        {
+            Order = order;
+            Activate(container);
+        }
 
         public override void Activate(IoC container)
         {
@@ -32,6 +53,7 @@
             _isTarget = isTarget;
             SetSpriteEnabled(isTarget);
             _childSprite = _childSprite == null ? GetComponentInChildren<SpriteRenderer>() : _childSprite;
+            SetColour(isTarget);
             //_childSprite.color = isTarget ? Color.red : new Color(1, 1, 1, 0.2f);
         }
 
@@ -42,12 +64,15 @@
             //Debug.LogFormat("Entered drawing field {0}.", name);
             if (_isTarget)
             {
-                _logic.DrawingFieldRegistered(this);
+                if (!_logic.DrawingFieldRegistered(this))
+                {
+                    return;
+                }
                 IsTarget(false);
                 SetColour(false);
                 return;
             }
-            
+
             // Debug
             //SetColour(true);
         }
@@ -60,7 +85,7 @@
             {
                 return;
             }
-            
+
             // Debug
             //SetColour(false);
         }
@@ -74,7 +99,8 @@
         private void SetColour(bool isOn)
         {
             _childSprite = _childSprite == null ? GetComponentInChildren<SpriteRenderer>() : _childSprite;
-            _childSprite.color = isOn ? Color.yellow : Color.white;
+            var onColor = IsLowestOrder ? Color.green : new Color(0f, 0f, 0f, 0f);
+            _childSprite.color = isOn ? onColor : Color.white;
         }
 
         void Update()
