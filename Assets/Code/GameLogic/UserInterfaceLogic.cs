@@ -5,6 +5,7 @@
     using DataAccess;
     using MonoBehaviours.Configuration;
     using MonoBehaviours.UserInterface;
+    using UnityEngine;
 
     public class UserInterfaceLogic : LogicBase
     {
@@ -22,7 +23,6 @@
                 return;
             }
             GameCanvas = PrefabManager.GetPrefab(Configuration.ui_game_canvas_manager);
-            GameCanvas.Activate(Container);
         }
 
         internal void InitializeGameOverCanvas()
@@ -30,7 +30,12 @@
             PrefabManager.ReturnPrefab(GameCanvas);
 
             GameOverCanvas = PrefabManager.GetPrefab(Configuration.ui_game_over_canvas_manager);
-            GameOverCanvas.Activate(Container);
+        }
+
+        internal void ShowPlayerFloatingText(string textToShow, Color textColor)
+        {
+            var playerFloatingText = GameCanvas.GetComponentInChildren<FloatingText>();
+            playerFloatingText.ShowTextForSeconds(textToShow, 1, textColor);
         }
     }
 }

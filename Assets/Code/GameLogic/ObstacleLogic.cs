@@ -79,7 +79,7 @@
 
                 obst.Activate(Container, level, randomPosition);
 
-                ScoreLogic.AddToScore(level);
+                //ScoreLogic.AddToScore(level);
 
                 activeObjs.Add(obst);
             }

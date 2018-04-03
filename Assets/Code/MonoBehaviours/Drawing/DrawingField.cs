@@ -11,7 +11,7 @@
         private DrawingFieldLogic _logic;
         private SpriteRenderer _childSprite;
         private bool _isTarget;
-        public int Order { get; private set; }
+        public int Order { get; set; }
 
         private bool _isLowestOrder;
         public bool IsLowestOrder
@@ -25,12 +25,6 @@
                 _isLowestOrder = value;
                 SetColour(true);
             }
-        }
-
-        public void Activate(IoC container, int order)
-        {
-            Order = order;
-            Activate(container);
         }
 
         public override void Activate(IoC container)
@@ -49,10 +43,10 @@
         }
 
         public void IsTarget(bool isTarget)
-        {
+        { 
             _isTarget = isTarget;
             SetSpriteEnabled(isTarget);
-            _childSprite = _childSprite == null ? GetComponentInChildren<SpriteRenderer>() : _childSprite;
+            IsLowestOrder = true;
             SetColour(isTarget);
             //_childSprite.color = isTarget ? Color.red : new Color(1, 1, 1, 0.2f);
         }
@@ -64,13 +58,7 @@
             //Debug.LogFormat("Entered drawing field {0}.", name);
             if (_isTarget)
             {
-                if (!_logic.DrawingFieldRegistered(this))
-                {
-                    return;
-                }
-                IsTarget(false);
-                SetColour(false);
-                return;
+                _logic.DrawingFieldRegistered(this);
             }
 
             // Debug
@@ -99,8 +87,8 @@
         private void SetColour(bool isOn)
         {
             _childSprite = _childSprite == null ? GetComponentInChildren<SpriteRenderer>() : _childSprite;
-            var onColor = IsLowestOrder ? Color.green : new Color(0f, 0f, 0f, 0f);
-            _childSprite.color = isOn ? onColor : Color.white;
+            var onColor = Color.white;
+            _childSprite.color = isOn ? onColor : Color.black;
         }
 
         void Update()

@@ -24,10 +24,10 @@
             var drawing = Container.Resolve<DrawingFieldLogic>();
             drawing.InitializeDrawingFields();
             drawing.InitializeTestDrawing();
+            //drawing.UpdateLowestOrderDrawingField();
 
 
             var field = PrefabManager.GetPrefab(Configuration.prefab_obstacle_field);
-            field.Activate(Container);
             field.StartWave(CreateWaves(null, 100));
         }
 

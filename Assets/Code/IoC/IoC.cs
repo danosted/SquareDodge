@@ -37,15 +37,15 @@
             {
                 entity = (T)Activator.CreateInstance(typeof(T), new object[] { });
             }
+            else if (typeof(T).GetConstructor(new[] { typeof(IoC), typeof(PrefabManager), typeof(GlobalConfiguration) }) != null)
+            {
+                entity = (T)Activator.CreateInstance(typeof(T), new object[] { this, PrefabManager, Configuration });
+            }
             else if (typeof(T).GetConstructor(new[] { typeof(IoC) }) != null)
             {
                 entity = (T)Activator.CreateInstance(typeof(T), new object[] { this });
             }
-            else
-            {
-                entity = (T)Activator.CreateInstance(typeof(T), new object[] { this, PrefabManager, Configuration });
-            }
-
+            
             _container.Add(entity);
 
             return entity;

@@ -14,12 +14,16 @@
     {
 
         private ScreenUtil _screen;
+        private float _initDrawingTime;
 
         private Point FieldSize { get; set; }
         private ICollection<Point> DrawingFieldPoints { get; set; }
         private ICollection<Vector3> CurrentFigurePoints { get; set; }
         private ICollection<DrawingField> DrawingFields { get; set; }
         private ICollection<DrawingField> CurrentDrawingPoints { get; set; }
+        private const string activePrefix = "active ";
+
+        private ScoreLogic ScoreLogic { get; set; }
 
         private struct Point
         {
@@ -30,6 +34,7 @@
         public DrawingFieldLogic(IoC container, PrefabManager prefabManager, GlobalConfiguration config) : base(container, prefabManager, config)
         {
             _screen = Container.Resolve<ScreenUtil>();
+            ScoreLogic = Container.Resolve<ScoreLogic>();
 
         }
 
@@ -52,13 +57,14 @@
 
             // Initialize the drawing fields in the game world
             DrawingFields = new List<DrawingField>(CurrentFigurePoints.Count);
+            CurrentDrawingPoints = new List<DrawingField>();
             var fieldOrder = 1;
             foreach (var point in CurrentFigurePoints)
             {
                 var dField = PrefabManager.GetPrefab(Configuration.prefab_drawing_field);
                 dField.transform.position = point;
                 dField.name = string.Format("Order: {0}, X: {1} - Y: {2}.", fieldOrder, point.x, point.y);
-                dField.Activate(Container, fieldOrder);
+                dField.Order = fieldOrder;
                 DrawingFields.Add(dField);
                 fieldOrder++;
             }
@@ -72,17 +78,12 @@
                 Debug.LogWarning("No drawing fields found.");
                 return;
             }
-            var drawingPointCount = (int)Random.Range(Configuration.param_drawing_field_figure_point_count.x, Configuration.param_drawing_field_figure_point_count.y);
-            var drawingSegments = DrawingFields.Count / drawingPointCount;
-            CurrentDrawingPoints = new List<DrawingField>(drawingPointCount);
-            for (var i = 0; i < drawingPointCount - 1; i++)
-            {
-                var randomIndex = Random.Range(drawingSegments * i, drawingSegments * (i + 1));
-                var field = DrawingFields.ElementAt(randomIndex);
-                CurrentDrawingPoints.Add(field);
-                field.IsTarget(true);
-            }
-            UpdateLowestOrderDrawingField();
+            _initDrawingTime = Time.time;
+            var randomIndex = Random.Range(0, DrawingFields.Count() - 1);
+            var field = DrawingFields.ElementAt(randomIndex);
+            field.name = activePrefix + field.name;
+            CurrentDrawingPoints.Add(field);
+            field.IsTarget(true);
         }
 
         public int GetDrawingFieldIndex(DrawingField drawingField)
@@ -102,14 +103,18 @@
             // Are there any drawing fields with lower order, then it is not a success
             if (drawingField.IsLowestOrder)
             {
-                Debug.LogFormat("DrawingField registered. Order {0}.", drawingField.Order);
+                var activeSeconds = Time.time - _initDrawingTime;
+                ScoreLogic.AddDrawingFieldPoints(activeSeconds);
+                Debug.LogFormat("DrawingField registered. Order {0}. ActiveSeconds {1}.", drawingField.Order, activeSeconds);
                 CurrentDrawingPoints.Remove(drawingField);
+                drawingField.name = drawingField.name.Replace(activePrefix, "");
+                drawingField.IsTarget(false);
                 if (!CurrentDrawingPoints.Any())
                 {
                     Debug.LogFormat("All drawing points registered. Hurray!!.");
                     InitializeTestDrawing();
                 }
-                UpdateLowestOrderDrawingField();
+                //UpdateLowestOrderDrawingField();
                 return true;
             }
             else
@@ -119,15 +124,15 @@
             }
         }
 
-        private void UpdateLowestOrderDrawingField()
-        {
-            var lowestOrderDrawingField = CurrentDrawingPoints.FirstOrDefault(df => CurrentDrawingPoints.Min(x => x.Order) == df.Order);
-            if(lowestOrderDrawingField == null)
-            {
-                throw new System.Exception("Could not find lowest order drawing field.");
-            }
-            lowestOrderDrawingField.IsLowestOrder = true;
-        }
+        //public void UpdateLowestOrderDrawingField()
+        //{
+        //    var lowestOrderDrawingField = CurrentDrawingPoints.FirstOrDefault(df => CurrentDrawingPoints.Min(x => x.Order) == df.Order);
+        //    if(lowestOrderDrawingField == null)
+        //    {
+        //        throw new System.Exception("Could not find lowest order drawing field.");
+        //    }
+        //    lowestOrderDrawingField.IsLowestOrder = true;
+        //}
 
         #region Create Drawing Fields
         private ICollection<Point> CreateDrawingField(int width, int height)

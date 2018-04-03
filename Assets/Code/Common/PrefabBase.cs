@@ -11,7 +11,6 @@
         #region Properties
         protected IoC Container { get; set; }
         protected PrefabManager PrefabManager { get; private set; }
-        protected ScoreLogic ScoreLogic { get; private set; }
         protected GlobalConfiguration Configuration { get; private set; }
         #endregion
 
@@ -19,7 +18,6 @@
         {
             Container = container;
             PrefabManager = PrefabManager == null ? Container.Resolve<PrefabManager>() : PrefabManager;
-            ScoreLogic = ScoreLogic == null ? Container.Resolve<ScoreLogic>() : ScoreLogic;
             Configuration = Configuration == null ? PrefabManager.GetConfiguration() : Configuration;
         }
     }

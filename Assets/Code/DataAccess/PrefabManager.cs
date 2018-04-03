@@ -1,5 +1,6 @@
 ﻿namespace Assets.Code.DataAccess
 {
+    using Assets.Code.Common;
     using IoC;
     using MonoBehaviours.Configuration;
     using MonoBehaviours.UserInterface;
@@ -21,7 +22,7 @@
             _inactivePrefabs = new List<Object>();
         }
 
-        public T GetPrefab<T>(T prefab) where T : Object
+        public T GetPrefab<T>(T prefab) where T : PrefabBase
         {
             lock (semaLock)
             {
@@ -34,6 +35,7 @@
                 {
                     _inactivePrefabs.Remove(instance);
                     _activePrefabs.Add(instance);
+                    instance.Activate(_container);
                     return instance;
                 }
 
@@ -43,6 +45,7 @@
                 }
                 instance = Object.Instantiate(prefab);
                 _activePrefabs.Add(instance);
+                instance.Activate(_container);
                 return instance;
             }
         }

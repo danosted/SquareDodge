@@ -1,5 +1,6 @@
 ﻿namespace Assets.Code.Common
 {
+    using Assets.Code.GameLogic;
     using DataAccess;
     using IoC;
     using MonoBehaviours.Configuration;
@@ -11,7 +12,7 @@
         protected PrefabManager PrefabManager { get; private set; }
         protected GlobalConfiguration Configuration { get; private set; }
         #endregion
-        
+
         #region Constructors
         public LogicBase(IoC container, PrefabManager prefabManager, GlobalConfiguration config)
         {
